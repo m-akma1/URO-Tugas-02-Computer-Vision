@@ -2,35 +2,42 @@ import cv2
 import numpy as np
 
 # Load the video
-cap = cv2.VideoCapture('object_video.mp4')
+video_source = cv2.VideoCapture('object_video.mp4')
 
 # Loop through each frame
 while True:
-    ret, frame = cap.read()
+    ret, frame = video_source.read()
     if not ret:
         break
 
     # Convert the frame to HSV
-    hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+    hsv_converted_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
-    # Define the HSV color range for the object to be detected
-    lower_color = np.array([30, 150, 50])
-    upper_color = np.array([255, 255, 180])
-
-    # Generate the HSV mask
-    mask = cv2.inRange(hsv, lower_color, upper_color)
+    # Define the HSV color range for the red object to be detected
+    low_bound_1 = np.array([0, 120, 70])
+    up_bound_1 = np.array([10, 255, 255])
+    
+    low_bound_2 = np.array([170, 120, 70])
+    up_bound_2 = np.array([180, 255, 255])
+    
+    # Generate the HSV mask for both red ranges
+    mask1 = cv2.inRange(hsv_converted_frame, low_bound_1, up_bound_1)
+    mask2 = cv2.inRange(hsv_converted_frame, low_bound_2, up_bound_2)
+    
+    # Combine both masks
+    mask = cv2.bitwise_or(mask1, mask2)
 
     # Apply mask to the original frame
-    res = cv2.bitwise_and(frame, frame, mask=mask)
+    masked_frame = cv2.bitwise_and(frame, frame, mask=mask)
 
     # Find contours from the mask
-    contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    detected_contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
     # Loop through each contour to draw bounding rectangles
-    for contour in contours:
+    for contour in detected_contours:
         area = cv2.contourArea(contour)
-        # Filtering objects based on contour area (example: area > 500 to avoid noise)
-        if area > 500:
+        # Filtering objects based on contour area (example: area > 100 to avoid noise)
+        if area > 100:
             x, y, w, h = cv2.boundingRect(contour)
             cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
 
@@ -43,5 +50,5 @@ while True:
         break
 
 # Release video and destroy all windows
-cap.release()
+video_source.release()
 cv2.destroyAllWindows()
