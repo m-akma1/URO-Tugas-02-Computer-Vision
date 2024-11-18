@@ -4,6 +4,11 @@ import numpy as np
 # Load the video
 video_source = cv2.VideoCapture('object_video.mp4')
 
+# Define the codec and create VideoWriters for output
+fourcc = cv2.VideoWriter_fourcc(*'XVID')
+out_frame = cv2.VideoWriter('output_frame.avi', fourcc, 20.0, (int(video_source.get(3)), int(video_source.get(4))))
+out_mask = cv2.VideoWriter('output_mask.avi', fourcc, 20.0, (int(video_source.get(3)), int(video_source.get(4))))
+
 # Loop through each frame
 while True:
     ret, frame = video_source.read()
@@ -41,6 +46,11 @@ while True:
             x, y, w, h = cv2.boundingRect(contour)
             cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
 
+    # Write the processed frames to the output videos
+    out_frame.write(frame)
+    out_mask_frame = cv2.merge([mask, mask, mask])  # Convert mask to 3-channel to save as video
+    out_mask.write(out_mask_frame)
+
     # Display the frame with detected object(s)
     cv2.imshow('Frame', frame)
     cv2.imshow('Mask', mask)
@@ -51,4 +61,6 @@ while True:
 
 # Release video and destroy all windows
 video_source.release()
+out_frame.release()
+out_mask.release()
 cv2.destroyAllWindows()
